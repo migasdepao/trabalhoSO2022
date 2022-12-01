@@ -17,6 +17,7 @@ int pesquisaLote(char* ficheiro, struct coordenada* alarmes, int n){
     char buf[200]; //array para obter a string do exemplo.txt
     int x = read(fd, &buf, 60);
     char* token[6]; //coloquei 6 só para testar mas caso se aumentasse a quantidade de coordenadas a pesquisar também teriamos que aumentar ao tamanho do token
+    int alarmesTotais=0;
 
     struct pixel pix; //variavel de teste para brincar no while
 
@@ -59,7 +60,7 @@ int pesquisaLote(char* ficheiro, struct coordenada* alarmes, int n){
             
             printf("filho1 prestes a sair");
             
-            _exit(1);   
+            _exit(k);   
 
     }   else{
         pid2 = fork();
@@ -88,15 +89,22 @@ int pesquisaLote(char* ficheiro, struct coordenada* alarmes, int n){
             }
 
             printf("filho2 prestes a sair");
-            _exit(1);
+            _exit(k);
         }
         else{
             //processo pai
-            while(wait(NULL) != -1);
+            for(int i=0; i<2; i++){
+                int status;
+            wait(&status);
+            if(WIFEXITED(status))
+                alarmesTotais += WEXITSTATUS(status);
+              
+            }
+
             printf("latitude: %d\n logitude: %d\n", alarmes[0].latitude, alarmes[0].longitude); //print só de teste
             close(fd);
 
-            return 0;
+            return alarmesTotais;
 
 
         }
