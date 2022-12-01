@@ -31,12 +31,23 @@ int pesquisaLote(char* ficheiro, struct coordenada* alarmes, int n){
         printf("%d: %s\n", i, token[i]);
     }
 
+    int pfd[2][2];
     int pid1, pid2;
+
+    for(int i=0; i<2; i++){
+        if(pipe(pfd[i]) < 0){
+            return -1;
+        }
+    }
 
     pid1 = fork();
 
     if(pid1 == 0) {
         //processo filho 1
+
+        close(pfd[0][0]);
+        close(pfd[1][0]); //dou close no processo 1 o pipe que será usado pelo outro processo
+        close(pfd[1][1]); //dou close no processo 1 o pipe que será usado pelo outro processo
 
         Coordenada teste;  //variavel de teste do tipo coordenada para poder ter os valores originais
         teste.latitude = atoi(token[0]); //copio a latitude original para a variavel de teste
@@ -48,12 +59,18 @@ int pesquisaLote(char* ficheiro, struct coordenada* alarmes, int n){
         
         int v = 0; //variavel para saber em que pixel é que vou
         int k = 0; //variavel para incrementar em cada alarme acionado
+        int aux[2];
             while((fread(&pix, sizeof(pix), 1, fp0)) != 0 & k < n){ //enquanto houver pixeis para ler e k<n em que k é a quantidade de alarmes e n é o maximo de alarmes
                 printf("%d %d %d %d \n", pix.r, pix.g, pix.b, pix.ir);
                 if((pix.r + pix.g + pix.b) > 100 & pix.ir > 200){
                     alarmes[k].latitude = teste.latitude;               //adiciono a alarmes a latitude original
                     alarmes[k].longitude = teste.longitude + v;         //adiciono a alarmes a longitude original mais a quantidade de pixeis procurados
+                    
+                    aux[0]=alarmes[k].latitude;
+                    aux[1]=alarmes[k].longitude;
                     k++;
+                    printf("aux[0] = %d\n aux[1] = %d\n", aux[0], aux[1]);
+                    write(pfd[0][1], aux, sizeof(int)*2 );
                 }
             v++;
             }
@@ -93,6 +110,19 @@ int pesquisaLote(char* ficheiro, struct coordenada* alarmes, int n){
         }
         else{
             //processo pai
+
+            close(pfd[0][1]);
+            close(pfd[1][1]);    
+
+            int aux[2];
+
+            read(pfd[0][0], aux, sizeof(int)*2);
+            alarmes[0].latitude = aux[0];
+            alarmes[0].longitude = aux[1];
+
+            
+           
+
             for(int i=0; i<2; i++){
                 int status;
             wait(&status);
