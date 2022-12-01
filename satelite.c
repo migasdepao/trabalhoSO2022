@@ -114,14 +114,25 @@ int pesquisaLote(char* ficheiro, struct coordenada* alarmes, int n){
             close(pfd[0][1]);
             close(pfd[1][1]);    
 
+            int x=0;
             int aux[2];
-
-            read(pfd[0][0], aux, sizeof(int)*2);
-            alarmes[0].latitude = aux[0];
-            alarmes[0].longitude = aux[1];
-
             
+            Coordenada* alarmesAux = malloc(sizeof(struct coordenada) * n);
+
+            int c = read(pfd[0][0], aux, sizeof(int)*2);
+
+            while(c>0){
+                printf("dentro do while:%d \n", x);
+                alarmesAux[x].latitude = aux[0];
+                alarmesAux[x].longitude = aux[1];
+                x++;
+                c = read(pfd[0][0], aux, sizeof(int)*2);
+            }
            
+            for(int i=0; i<x; i++){
+
+                printf("FOR: latitude: %d\n FOR: longitude: %d\n", alarmesAux[i].latitude, alarmesAux[i].longitude);
+            }
 
             for(int i=0; i<2; i++){
                 int status;
@@ -131,7 +142,7 @@ int pesquisaLote(char* ficheiro, struct coordenada* alarmes, int n){
               
             }
 
-            printf("latitude: %d\n logitude: %d\n", alarmes[0].latitude, alarmes[0].longitude); //print só de teste
+            //printf("latitude: %d\n logitude: %d\n", alarmes[0].latitude, alarmes[0].longitude); //print só de teste
             close(fd);
 
             return alarmesTotais;
