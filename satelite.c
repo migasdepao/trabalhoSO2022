@@ -53,6 +53,7 @@ int pesquisaLote(char* ficheiro, struct coordenada* alarmes, int n){
         teste.latitude = atoi(token[0]); //copio a latitude original para a variavel de teste
         teste.longitude = atoi(token[1]);   //copio a longitude original para a variavel de teste
 
+        int bartoloGay;
 
         int fp0 = open(token[2], O_RDONLY); //para já só abri este
         
