@@ -12,21 +12,34 @@
 
 
 int pesquisaLote(char* ficheiro, struct coordenada* alarmes, int n){
+
+    //obter o numero de linhas do exemplo.txt
+    int fd1 = open(ficheiro, O_RDONLY);
+    char c;
+    int lines = 1;
+    while (read(fd1, &c, 1) == 1) {
+    // Increment the line count whenever a newline character is read
+    if (c == '\n') {
+      lines++;
+        }
+    }
+    
     int fd = open(ficheiro, O_RDONLY);
     
-    char buf[200]; //array para obter a string do exemplo.txt
-    int x = read(fd, &buf, 60);
-    char* token[6]; //coloquei 6 só para testar mas caso se aumentasse a quantidade de coordenadas a pesquisar também teriamos que aumentar ao tamanho do token
+    char buf[(27*lines)];   //array para obter a string do exemplo.txt (27 para conseguir ler uma linha inteira * nr linhas)
+    int x = read(fd, &buf, (27*lines));
+    char* token[(3*lines)]; //tamanho do token será 3 (lat + long + path) * numero de linhas
     int alarmesTotais=0;
 
     struct pixel pix; //variavel de teste para brincar no while
-
+    
     //metodo para obter tanto as coordenadas como os paths dos ficheiros binarios
     token[0] = strtok(buf, "  \n");
     for(int i=1; i<sizeof(token)/sizeof(token[0]); i++){
         token[i] = strtok(NULL, "  \n");
     }
 
+    //print dos tokens
     for(int i=0; i<sizeof(token)/sizeof(token[0]); i++){
         printf("%d: %s\n", i, token[i]);
     }
@@ -34,6 +47,7 @@ int pesquisaLote(char* ficheiro, struct coordenada* alarmes, int n){
     int pfd[2][2];
     int pid1, pid2;
 
+    //crio os pipes e verifico logo se ocorreu algum erro
     for(int i=0; i<2; i++){
         if(pipe(pfd[i]) < 0){
             return -1;
@@ -53,7 +67,6 @@ int pesquisaLote(char* ficheiro, struct coordenada* alarmes, int n){
         teste.latitude = atoi(token[0]); //copio a latitude original para a variavel de teste
         teste.longitude = atoi(token[1]);   //copio a longitude original para a variavel de teste
 
-        int bartoloGay;
 
         int fp0 = open(token[2], O_RDONLY); //para já só abri este
         
