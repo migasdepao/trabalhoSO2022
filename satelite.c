@@ -59,6 +59,8 @@ int pesquisaLote(char* ficheiro, struct coordenada* alarmes, int n){
         }
     }
 
+    //alarmes = realloc(alarmes, sizeof(Coordenada) * n * lines);
+
 
     //criamos um processo para cada .dat que vamos procurar
     pid_t pids[lines]; //crio a quantidade de pids conforme a quantidade de linhas, neste caso será igual ao valor total de ficheiros em que vamos procurar
@@ -173,14 +175,29 @@ int pesquisaLote(char* ficheiro, struct coordenada* alarmes, int n){
 
 int main(int argc, char argv[]){
     
-    Coordenada* alarmes = malloc(sizeof(Coordenada) * 50);
+    //obter o numero de linhas do exemplo.txt
+    int fd1 = open("./exemplo.txt", O_RDONLY);
+    char c;
+    int lines = 1;
+    while (read(fd1, &c, 1) == 1) {
+    // Increment the line count whenever a newline character is read
+    if (c == '\n') {
+      lines++;
+        }
+    }
+    
+    int maxAlarmes = 5; //é o numero máximo de alarmes que quero encontrar por .dat
 
-    int n = pesquisaLote("./exemplo.txt", alarmes, 5);
+    //aloco o tamanho da struct * o numero de ficheiros que vou procurar * o numero maximo de alarmes por ficheiro
+    Coordenada* alarmes = malloc(sizeof(Coordenada) * lines * maxAlarmes); 
+
+    int n = pesquisaLote("./exemplo.txt", alarmes, maxAlarmes);
     printf("Encontrei %d alarmes!\n", n);
     for(int i = 0; i<n; i++){
         printf("latitude: %d longitude: %d\n", alarmes[i].latitude, alarmes[i].longitude);
     }
     
-
+    free(alarmes);
+    
     return 0;
 }
