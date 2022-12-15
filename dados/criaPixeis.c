@@ -6,17 +6,17 @@ int main(int argc, char const *argv[])
 
 {
 
-    int arr[30] = {1, 34, 1, 313, 
+    int arr[30] = {1, 34, 1, 11, 
 
-                   123, 2, 2, 32, 
+                   123, 100, 2, 10, 
 
                    23, 224, 253, 21,
 
-                   40, 43, 40, 250,
+                   40, 43, 40, 12,
 
-                   42, 43, 44, 445,
+                   42, 43, 44, 13,
 
-                   1, 1, 21, 41,
+                   100, 70, 21, 250,
 
                    12, 234, 2, 2};
 
@@ -26,7 +26,7 @@ int main(int argc, char const *argv[])
 
 
 
-    ficheiro = fopen("a03.dat", "wb");
+    ficheiro = fopen("a05.dat", "wb");
 
     fwrite(arr, sizeof(int), 30, ficheiro);
 

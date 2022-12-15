@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include "satelite.h"
+#define MAX_PROCESSES 4
 
 //struct pixel { unsigned int r, g, b, ir; };
 //struct coordenada { int latitude, longitude; };
@@ -23,11 +24,12 @@ int pesquisaLote(char* ficheiro, struct coordenada* alarmes, int n){
       lines++;
         }
     }
+    printf("numero de linhas\n: %d", lines);
     
     int fd = open(ficheiro, O_RDONLY);
     
-    char buf[(27*lines)];   //array para obter a string do exemplo.txt (27 para conseguir ler uma linha inteira * nr linhas)
-    int x = read(fd, &buf, (27*lines));
+    char buf[(30*lines)];   //array para obter a string do exemplo.txt (27 para conseguir ler uma linha inteira * nr linhas)
+    int x = read(fd, &buf, (30*lines));
     char* token[(3*lines)]; //tamanho do token será 3 (lat + long + path) * numero de linhas
     int alarmesTotais=0;
 
@@ -44,35 +46,58 @@ int pesquisaLote(char* ficheiro, struct coordenada* alarmes, int n){
         printf("%d: %s\n", i, token[i]);
     }
 
-    int pfd[2][2];
-    int pid1, pid2;
+    int num_processos = 0; //numero de processos ativos
+    //lines vai ser a quantidade total de processos que vamos criar
+
+    int pfd[lines][2];
 
     //crio os pipes e verifico logo se ocorreu algum erro
-    for(int i=0; i<2; i++){
-        if(pipe(pfd[i]) < 0){
-            return -1;
+    for(int i=0; i<lines; i++){
+        if(pipe(pfd[i]) < 0 ){
+            perror("Erro ao criar o pipe");
+            return 1;
         }
     }
 
-    pid1 = fork();
 
-    if(pid1 == 0) {
-        //processo filho 1
+    //criamos um processo para cada .dat que vamos procurar
+    pid_t pids[lines];
+    int status;
 
-        close(pfd[0][0]);
-        close(pfd[1][0]); //dou close no processo 1 o pipe que será usado pelo outro processo
-        close(pfd[1][1]); //dou close no processo 1 o pipe que será usado pelo outro processo
+    for(int p=0; p < lines; p++){
+        /*if(num_processos == MAX_PROCESSES){
 
-        Coordenada teste;  //variavel de teste do tipo coordenada para poder ter os valores originais
-        teste.latitude = atoi(token[0]); //copio a latitude original para a variavel de teste
-        teste.longitude = atoi(token[1]);   //copio a longitude original para a variavel de teste
+            //vamos esperar que algum processo filho termine
+            waitpid(pids[p], &status, 0);
+            if(WIFEXITED(status)){
+                alarmesTotais += WEXITSTATUS(status);
+              
+            }
+            num_processos--;
+        }*/
 
+        //vou criar um processo filho
+        pids[p] = fork();
 
-        int fp0 = open(token[2], O_RDONLY); //para já só abri este
-        
-        int v = 0; //variavel para saber em que pixel é que vou
-        int k = 0; //variavel para incrementar em cada alarme acionado
-        int aux[2];
+        if(pids[p] < 0 ){
+            perror("Erro ao criar um processo filho");
+            return 2;
+        }
+
+        if(pids[p] == 0){
+            //processo filho
+            close(pfd[p][0]);
+
+            Coordenada teste;  //variavel de teste do tipo coordenada para poder ter os valores originais
+            teste.latitude = atoi(token[(0+(p*3))]); //copio a latitude original para a variavel de teste
+            teste.longitude = atoi(token[(1+(p*3))]);   //copio a longitude original para a variavel de teste
+
+            int fp0 = open(token[(2+(p*3))], O_RDONLY);
+
+            int v = 0; //variavel para saber em que pixel é que vou
+            int k = 0; //variavel para incrementar em cada alarme acionado
+            int aux[2];
+
             while((read(fp0, &pix, sizeof(pix))) > 0  & k < n){ //enquanto houver pixeis para ler e k<n em que k é a quantidade de alarmes e n é o maximo de alarmes
                 printf("%d %d %d %d \n", pix.r, pix.g, pix.b, pix.ir);
                 if((pix.r + pix.g + pix.b) > 100 & pix.ir > 200){
@@ -82,102 +107,65 @@ int pesquisaLote(char* ficheiro, struct coordenada* alarmes, int n){
                     aux[0]=alarmes[k].latitude;
                     aux[1]=alarmes[k].longitude;
                     k++;
-                    printf("processo 1: aux[0] = %d\n processo1: aux[1] = %d\n", aux[0], aux[1]);
-                    write(pfd[0][1], aux, sizeof(int)*2 );
+                    printf("processo %d: aux[0] = %d\n processo %d: aux[1] = %d\n",p,aux[0],p, aux[1]);
+                    write(pfd[p][1], aux, sizeof(int)*2 );
                 }
             v++;
             }
-            
-            close(pfd[0][1]);
-            printf("filho1 prestes a sair");
-            
-            _exit(k);   
 
-    }   else{
-        pid2 = fork();
+            close(pfd[p][1]);
+            printf("Filho %d prestes a sair\n", p);
 
-        if(pid2 == 0){
-        //processo filho 2
-
-        close(pfd[0][0]);
-        close(pfd[0][1]);
-        close(pfd[1][0]);
-
-        Coordenada teste;  //variavel de teste do tipo coordenada para poder ter os valores originais
-        teste.latitude = atoi(token[3]); //copio a latitude original para a variavel de teste
-        teste.longitude = atoi(token[4]);   //copio a longitude original para a variavel de teste    
-
-
-        int fp1 = open(token[5], O_RDONLY);
-        
-        int v = 0; //variavel para saber em que pixel é que vou
-        int k = 0; //variavel para incrementar em cada alarme acionado
-        int aux[2];
-            //read(fp1, &pix, sizeof(pix))
-            while((read(fp1, &pix, sizeof(pix))) > 0 & k < n){ //enquanto houver pixeis para ler e k<n em que k é a quantidade de alarmes e n é o maximo de alarmes
-                printf("%d %d %d %d \n", pix.r, pix.g, pix.b, pix.ir);
-                if((pix.r + pix.g + pix.b) > 100 & pix.ir > 200){
-                    alarmes[k].latitude = teste.latitude;               //adiciono a alarmes a latitude original
-                    alarmes[k].longitude = teste.longitude + v;         //adiciono a alarmes a longitude original mais a quantidade de pixeis procurados
-
-                    aux[0]=alarmes[k].latitude;
-                    aux[1]=alarmes[k].longitude;
-
-                    k++;
-                    printf("processo 2: aux[0] = %d\n processo2: aux[1] = %d\n", aux[0], aux[1]);
-                    write(pfd[1][1], aux, sizeof(int)*2 );
-                }
-            v++;
-            }
-            close(pfd[1][1]);
-
-            printf("filho2 prestes a sair");
             _exit(k);
-        }
-        else{
+        }else{
             //processo pai
 
-            close(pfd[0][1]);
-            close(pfd[1][1]);    
-
+            close(pfd[p][1]);
+               
             int x=0;
             int aux[2];
             
             Coordenada* alarmesAux = malloc(sizeof(struct coordenada) * n);
 
-            int c = read(pfd[0][0], aux, sizeof(int)*2);
+            int c = read(pfd[p][0], aux, sizeof(int)*2);
 
             while(c>0){
                 printf("dentro do while:%d \n", x);
                 alarmesAux[x].latitude = aux[0];
                 alarmesAux[x].longitude = aux[1];
                 x++;
-                c = read(pfd[0][0], aux, sizeof(int)*2);
+                c = read(pfd[p][0], aux, sizeof(int)*2);
             }
            
             for(int i=0; i<x; i++){
 
                 printf("FOR: latitude: %d\n FOR: longitude: %d\n", alarmesAux[i].latitude, alarmesAux[i].longitude);
             }
+            num_processos++;
 
-            for(int i=0; i<2; i++){
+            
+
+            //printf("latitude: %d\n logitude: %d\n", alarmes[0].latitude, alarmes[0].longitude); //print só de teste
+            close(fd);
+
+            
+
+
+        }
+
+    }
+        //espero todos os processos terminar em caso de duvida
+        for(int p=0; p<lines; p++){
                 int status;
-            wait(&status);
+            waitpid(pids[p], &status, 0);
             if(WIFEXITED(status))
                 alarmesTotais += WEXITSTATUS(status);
               
             }
 
-            //printf("latitude: %d\n logitude: %d\n", alarmes[0].latitude, alarmes[0].longitude); //print só de teste
-            close(fd);
-
-            return alarmesTotais;
-
-
-        }
+        return alarmesTotais;
     } 
 
-}
 
 int main(int argc, char argv[]){
     

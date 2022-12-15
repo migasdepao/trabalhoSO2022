@@ -2,3 +2,5 @@
 1235 5678 ./dados/a01.dat
 1236 5678 ./dados/a02.dat
 1237 5678 ./dados/a03.dat
+1238 5678 ./dados/a04.dat
+1239 5678 ./dados/a05.dat
