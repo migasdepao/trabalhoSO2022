@@ -61,8 +61,9 @@ int pesquisaLote(char* ficheiro, struct coordenada* alarmes, int n){
 
 
     //criamos um processo para cada .dat que vamos procurar
-    pid_t pids[lines];
+    pid_t pids[lines]; //crio a quantidade de pids conforme a quantidade de linhas, neste caso será igual ao valor total de ficheiros em que vamos procurar
     int status;
+    int globalInd = 0; //index global para conseguir guardar os valores dos alarmes
 
     for(int p=0; p < lines; p++){
         /*if(num_processos == MAX_PROCESSES){
@@ -97,15 +98,16 @@ int pesquisaLote(char* ficheiro, struct coordenada* alarmes, int n){
             int v = 0; //variavel para saber em que pixel é que vou
             int k = 0; //variavel para incrementar em cada alarme acionado
             int aux[2];
+            Coordenada* alarmesAux = malloc(sizeof(struct coordenada));
 
             while((read(fp0, &pix, sizeof(pix))) > 0  & k < n){ //enquanto houver pixeis para ler e k<n em que k é a quantidade de alarmes e n é o maximo de alarmes
                 printf("%d %d %d %d \n", pix.r, pix.g, pix.b, pix.ir);
                 if((pix.r + pix.g + pix.b) > 100 & pix.ir > 200){
-                    alarmes[k].latitude = teste.latitude;               //adiciono a alarmes a latitude original
-                    alarmes[k].longitude = teste.longitude + v;         //adiciono a alarmes a longitude original mais a quantidade de pixeis procurados
+                    alarmesAux[k].latitude = teste.latitude;               //adiciono a alarmes a latitude original
+                    alarmesAux[k].longitude = teste.longitude + v;         //adiciono a alarmes a longitude original mais a quantidade de pixeis procurados
                     
-                    aux[0]=alarmes[k].latitude;
-                    aux[1]=alarmes[k].longitude;
+                    aux[0]=alarmesAux[k].latitude;
+                    aux[1]=alarmesAux[k].longitude;
                     k++;
                     printf("processo %d: aux[0] = %d\n processo %d: aux[1] = %d\n",p,aux[0],p, aux[1]);
                     write(pfd[p][1], aux, sizeof(int)*2 );
@@ -125,21 +127,22 @@ int pesquisaLote(char* ficheiro, struct coordenada* alarmes, int n){
             int x=0;
             int aux[2];
             
-            Coordenada* alarmesAux = malloc(sizeof(struct coordenada) * n);
+            //alarmes = realloc(alarmes, sizeof(struct coordenada) * n);
 
             int c = read(pfd[p][0], aux, sizeof(int)*2);
 
             while(c>0){
                 printf("dentro do while:%d \n", x);
-                alarmesAux[x].latitude = aux[0];
-                alarmesAux[x].longitude = aux[1];
+                alarmes[globalInd].latitude = aux[0];
+                alarmes[globalInd].longitude = aux[1];
+                globalInd++;
                 x++;
                 c = read(pfd[p][0], aux, sizeof(int)*2);
             }
            
             for(int i=0; i<x; i++){
 
-                printf("FOR: latitude: %d\n FOR: longitude: %d\n", alarmesAux[i].latitude, alarmesAux[i].longitude);
+                printf("FOR: latitude: %d\n FOR: longitude: %d\n", alarmes[i].latitude, alarmes[i].longitude);
             }
             num_processos++;
 
@@ -162,6 +165,7 @@ int pesquisaLote(char* ficheiro, struct coordenada* alarmes, int n){
                 alarmesTotais += WEXITSTATUS(status);
               
             }
+       
 
         return alarmesTotais;
     } 
@@ -169,11 +173,14 @@ int pesquisaLote(char* ficheiro, struct coordenada* alarmes, int n){
 
 int main(int argc, char argv[]){
     
-    Coordenada* alarmes = malloc(sizeof(Coordenada));
+    Coordenada* alarmes = malloc(sizeof(Coordenada) * 50);
 
     int n = pesquisaLote("./exemplo.txt", alarmes, 5);
     printf("Encontrei %d alarmes!\n", n);
-    printf("teste de escrita alarmes %d %d", alarmes[0].latitude, alarmes[0].longitude);
+    for(int i = 0; i<n; i++){
+        printf("latitude: %d longitude: %d\n", alarmes[i].latitude, alarmes[i].longitude);
+    }
+    
 
     return 0;
 }
