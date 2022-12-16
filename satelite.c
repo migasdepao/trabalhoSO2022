@@ -91,6 +91,8 @@ int pesquisaLote(char* ficheiro, struct coordenada* alarmes, int n){
             //processo filho
             close(pfd[p][0]);
 
+        
+
             Coordenada teste;  //variavel de teste do tipo coordenada para poder ter os valores originais
             teste.latitude = atoi(token[(0+(p*3))]); //copio a latitude original para a variavel de teste
             teste.longitude = atoi(token[(1+(p*3))]);   //copio a longitude original para a variavel de teste
