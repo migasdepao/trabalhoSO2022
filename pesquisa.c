@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include "satelite.h"
+#include "satelite.c"
 
 int main(int argc, char argv[]){
     
@@ -33,10 +34,40 @@ int main(int argc, char argv[]){
     
     int fd[2]; // pipe file descriptors
 
-    
-
 
     free(alarmes);
-    
+    processoemail(n,alarmes);
     return 0;
+    }
+
+int processoemail(int n,Coordenada* alarmes) {
+  int aux[2];
+  int fd[2]; // pipe file descriptors
+  char output[1024];
+
+  // create the pipe
+  if (pipe(fd) == -1) {
+    perror("criaçao do pipe deu erro!");
+    return 1;
+  }
+  
+  
+    dup2(fd[0], STDIN_FILENO); // redirect stdin
+    close(fd[1]); // close the write end of the pipe
+    execl("./mail.sh", "mail.sh", "bombeiros@protecao-civil.pt", (char*) NULL);
+
+    
+    close(fd[0]); // close the read end of the pipe
+    for(int i = 0;  i < n ; i++){  // n - numero de alarmes
+      aux[0]=alarmes[i].latitude;
+      aux[1]=alarmes[i].longitude;
+      write(fd[1], aux, sizeof(int)*2);
+  }
+  printf("%s",output);
+  return 0;
 }
+
+
+
+
+
