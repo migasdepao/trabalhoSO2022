@@ -8,7 +8,64 @@
 #include "satelite.h"
 #include "satelite.c"
 
+
+int processoemail(int n,Coordenada* alarmes) {
+  //int aux[2];
+  
+
+  // criar o pipe para o processo filho comunicar
+    int pfd[2]; // pipe file descriptors
+    if (pipe(pfd) == -1) {
+        perror("pipe");
+        return 1;
+    }
+  
+  // fork the process
+    pid_t pid = fork();
+    if (pid == -1) {
+        perror("fork");
+        return 1;
+    }
+  
+  if (pid == 0) {
+        // child process
+        close(pfd[1]); // close the write end of the pipe
+
+        // set the read end of the pipe as the standard input
+        if (dup2(pfd[0], STDIN_FILENO) == -1) {
+            perror("dup2");
+            return 1;
+        }
+
+        // execute the mail.sh script with the email address as the argument
+        execlp("./mail.sh", "./mail.sh", "bombeiros@protecao-civil.pt", (char*)NULL);
+        perror("execlp");
+        return 1;
+    } else{
+
+        // parent process
+        close(pfd[0]); // close the read end of the pipe
+
+        // escreve os emails para o stdin
+        
+        if (write(pfd[1], alarmes, sizeof(struct coordenada)*n) == -1) {
+            perror("write");
+            return 1;
+        }
+        
+
+        close(pfd[1]); // close the write end of the pipe
+
+        wait(NULL);
+    }
+
+  
+  return 0;
+}
+
+
 int main(int argc, char argv[]){
+    
     
     //obter o numero de linhas do exemplo.txt
     int fd1 = open("./exemplo.txt", O_RDONLY);
@@ -31,43 +88,17 @@ int main(int argc, char argv[]){
     for(int i = 0; i<n; i++){
         printf("latitude: %d longitude: %d\n", alarmes[i].latitude, alarmes[i].longitude);
     }
+
+    //execlp("sort", "-n", alarmes, n, sizeof(int), NULL);
+
+    /*printf("depois do exec!\n");
+    for(int i = 0; i<n; i++){
+        printf("latitude: %d longitude: %d\n", alarmes[i].latitude, alarmes[i].longitude);
+    }*/
+  
     
-    int fd[2]; // pipe file descriptors
-
-
+    int l = processoemail(n,alarmes);
     free(alarmes);
-    processoemail(n,alarmes);
-    return 0;
-    }
-
-int processoemail(int n,Coordenada* alarmes) {
-  int aux[2];
-  int fd[2]; // pipe file descriptors
-  char output[1024];
-
-  // create the pipe
-  if (pipe(fd) == -1) {
-    perror("criaçao do pipe deu erro!");
-    return 1;
-  }
-  
-  
-    dup2(fd[0], STDIN_FILENO); // redirect stdin
-    close(fd[1]); // close the write end of the pipe
-    execl("./mail.sh", "mail.sh", "bombeiros@protecao-civil.pt", (char*) NULL);
-
     
-    close(fd[0]); // close the read end of the pipe
-    for(int i = 0;  i < n ; i++){  // n - numero de alarmes
-      aux[0]=alarmes[i].latitude;
-      aux[1]=alarmes[i].longitude;
-      write(fd[1], aux, sizeof(int)*2);
-  }
-  printf("%s",output);
-  return 0;
-}
-
-
-
-
-
+   return 0;
+    }
