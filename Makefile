@@ -28,7 +28,7 @@ all: pesquisa pesquisacli pesquisasrv
 
 pesquisa: pesquisa.c satelite.h satelite.c
 
-pesquisacli: pesquisa.c satelite.h satelite.c
+pesquisacli: pesquisacli.c satelite.h satelite.c pesquisa.c
 
 pesquisasrv: pesquisasrv.c satelite.h satelite.c
 

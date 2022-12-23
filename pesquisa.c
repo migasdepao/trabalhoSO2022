@@ -8,9 +8,12 @@
 #include "satelite.h"
 
 
-int processoemail(int n,Coordenada* alarmes) {
+int ProcessoEmail(int n,Coordenada* alarmes) {
   //int aux[2];
   
+  //int fd1;
+  //fd1 = open("alarmes.txt", 0660); //READ AND WRITE
+
 
   // crio o pipe para o processo filho comunicar
     int pfd[2]; // pipe file descriptors
@@ -63,41 +66,42 @@ int processoemail(int n,Coordenada* alarmes) {
 }
 
 
-int main(int argc, char *argv[]){
+// int main(int argc, char *argv[]){
     
     
-    //obter o numero de linhas do exemplo.txt
-    int fd1 = open("./exemplo.txt", O_RDONLY);
-    char c;
-    int lines = 1;
-    while (read(fd1, &c, 1) == 1) {
-    // Increment the line count whenever a newline character is read
-    if (c == '\n') {
-      lines++;
-        }
-    }
+//     //obter o numero de linhas do exemplo.txt
+//     int fd1 = open("./exemplo.txt", O_RDONLY);
+//     char c;
+//     int lines = 1;
+//     while (read(fd1, &c, 1) == 1) {
+//     // Increment the line count whenever a newline character is read
+//     if (c == '\n') {
+//       lines++;
+//         }
+//     }
     
-    int maxAlarmes = 5; //é o numero máximo de alarmes que quero encontrar por .dat
+//     int maxAlarmes = 5; //é o numero máximo de alarmes que quero encontrar por .dat
 
-    //aloco o tamanho da struct * o numero de ficheiros que vou procurar * o numero maximo de alarmes por ficheiro
-    Coordenada* alarmes = malloc(sizeof(Coordenada) * lines * maxAlarmes); 
+//     //aloco o tamanho da struct * o numero de ficheiros que vou procurar * o numero maximo de alarmes por ficheiro
+//     Coordenada* alarmes = malloc(sizeof(Coordenada) * lines * maxAlarmes); 
 
-    int n = pesquisaLote("./exemplo.txt", alarmes, maxAlarmes);
-    printf("Encontrei %d alarmes!\n", n);
-    for(int i = 0; i<n; i++){
-        printf("latitude: %d longitude: %d\n", alarmes[i].latitude, alarmes[i].longitude);
-    }
+//     int n = pesquisaLote("./exemplo.txt", alarmes, maxAlarmes);
+//     printf("Encontrei %d alarmes!\n", n);
+//     for(int i = 0; i<n; i++){
+//         printf("latitude: %d longitude: %d\n", alarmes[i].latitude, alarmes[i].longitude);
+//     }
 
-    //execlp("sort", "-n", alarmes, n, sizeof(int), NULL);
+//     //execlp("sort", "-n", alarmes, n, sizeof(int), NULL);
 
-    /*printf("depois do exec!\n");
-    for(int i = 0; i<n; i++){
-        printf("latitude: %d longitude: %d\n", alarmes[i].latitude, alarmes[i].longitude);
-    }*/
+//     /*printf("depois do exec!\n");
+//     for(int i = 0; i<n; i++){
+//         printf("latitude: %d longitude: %d\n", alarmes[i].latitude, alarmes[i].longitude);
+//     }*/
   
     
-    processoemail(n,alarmes);
-    free(alarmes);
+//     ProcessoEmail(n,alarmes);
+//     free(alarmes);
     
-   return 0;
-    }
+//    return 0;
+//     }
+    
