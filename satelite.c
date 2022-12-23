@@ -29,7 +29,7 @@ int pesquisaLote(char* ficheiro, struct coordenada* alarmes, int n){
     int fd = open(ficheiro, O_RDONLY);
     
     char buf[(30*lines)];   //array para obter a string do exemplo.txt (27 para conseguir ler uma linha inteira * nr linhas)
-    int x = read(fd, &buf, (30*lines));
+    read(fd, &buf, (30*lines));
     char* token[(3*lines)]; //tamanho do token será 3 (lat + long + path) * numero de linhas
     int alarmesTotais=0;
 
@@ -64,7 +64,6 @@ int pesquisaLote(char* ficheiro, struct coordenada* alarmes, int n){
 
     //criamos um processo para cada .dat que vamos procurar
     pid_t pids[lines]; //crio a quantidade de pids conforme a quantidade de linhas, neste caso será igual ao valor total de ficheiros em que vamos procurar
-    int status;
     int globalInd = 0; //index global para conseguir guardar os valores dos alarmes
 
     for(int p=0; p < lines; p++){
@@ -104,9 +103,9 @@ int pesquisaLote(char* ficheiro, struct coordenada* alarmes, int n){
             int aux[2];
             Coordenada* alarmesAux = malloc(sizeof(struct coordenada));
 
-            while((read(fp0, &pix, sizeof(pix))) > 0  & k < n){ //enquanto houver pixeis para ler e k<n em que k é a quantidade de alarmes e n é o maximo de alarmes
+            while( ( (read(fp0, &pix, sizeof(pix)) ) > 0 )  & (k < n)){ //enquanto houver pixeis para ler e k<n em que k é a quantidade de alarmes e n é o maximo de alarmes
                 printf("%d %d %d %d \n", pix.r, pix.g, pix.b, pix.ir);
-                if((pix.r + pix.g + pix.b) > 100 & pix.ir > 200){
+                if(((pix.r + pix.g + pix.b) > 100) & (pix.ir > 200)){
                     alarmesAux[k].latitude = teste.latitude;               //adiciono a alarmes a latitude original
                     alarmesAux[k].longitude = teste.longitude + v;         //adiciono a alarmes a longitude original mais a quantidade de pixeis procurados
                     

@@ -6,25 +6,24 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include "satelite.h"
-#include "satelite.c"
 
 
 int processoemail(int n,Coordenada* alarmes) {
   //int aux[2];
   
 
-  // criar o pipe para o processo filho comunicar
+  // crio o pipe para o processo filho comunicar
     int pfd[2]; // pipe file descriptors
     if (pipe(pfd) == -1) {
         perror("pipe");
-        return 1;
+        return -1;
     }
   
   // fork the process
     pid_t pid = fork();
     if (pid == -1) {
         perror("fork");
-        return 1;
+        return -1;
     }
   
   if (pid == 0) {
@@ -34,13 +33,13 @@ int processoemail(int n,Coordenada* alarmes) {
         // set the read end of the pipe as the standard input
         if (dup2(pfd[0], STDIN_FILENO) == -1) {
             perror("dup2");
-            return 1;
+            return -1;
         }
 
         // execute the mail.sh script with the email address as the argument
         execlp("./mail.sh", "./mail.sh", "bombeiros@protecao-civil.pt", (char*)NULL);
         perror("execlp");
-        return 1;
+        return -1;
     } else{
 
         // parent process
@@ -50,7 +49,7 @@ int processoemail(int n,Coordenada* alarmes) {
         
         if (write(pfd[1], alarmes, sizeof(struct coordenada)*n) == -1) {
             perror("write");
-            return 1;
+            return -1;
         }
         
 
@@ -64,7 +63,7 @@ int processoemail(int n,Coordenada* alarmes) {
 }
 
 
-int main(int argc, char argv[]){
+int main(int argc, char *argv[]){
     
     
     //obter o numero de linhas do exemplo.txt
@@ -97,7 +96,7 @@ int main(int argc, char argv[]){
     }*/
   
     
-    int l = processoemail(n,alarmes);
+    processoemail(n,alarmes);
     free(alarmes);
     
    return 0;
