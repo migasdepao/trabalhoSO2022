@@ -15,42 +15,29 @@
 int main(int argc, char *argv[]) {
 
 // Create the FIFO file
-if (mkfifo(FIFO_FILE, 0666) < 0) {
-perror("Erro ao criar o fifo file");
-exit(1);
-}
+mkfifo(FIFO_FILE, 0666);
 
 // Create the LOG file
-if (mkfifo(LOG, 0666) < 0) {
-perror("Erro ao criar o fifo file");
-exit(1);
-}
+mkfifo(LOG, 0666);
 
 // Abri o FIFO file para poder ler e escrever
 int fd = open(FIFO_FILE, O_RDWR);
-if (fd < 0) {
-perror("Erro ao abrir o fifo file");
-exit(1);
-}
 
 // Abri o FIFO de log para poder escrever do cliente
 int fd1 = open(LOG, O_RDWR);
-if (fd1 < 0) {
-perror("Erro ao abrir o log file");
-exit(1);
-}
 
+char path[30];
+strcpy(path, "./exemplo.txt");
 
-printf("arv[0]: %s", argv[0]);
-printf("arv[1]: %s", argv[1]);
-printf("arv[2]: %s", argv[2]);
+printf("argv[1]: %s", path);
+
 // fica continuamente à espera de respostas do servidor
-while (1) {
+
 printf("teste dento do whule");
 char buffer[1024];
 //o cliente precisa de escrever o path e o limite
 
-//write(fd, argv, sizeof(argv));
+write(fd, path, strlen(path));
 
 int n = read(fd1, buffer, sizeof(buffer));
 
@@ -59,7 +46,7 @@ if (n > 0) {
   printf("Received message: %s \n", buffer);
 }
 
-}
+
 
 // Close the FIFO file and delete it
 close(fd);

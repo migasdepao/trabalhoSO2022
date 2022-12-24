@@ -196,7 +196,7 @@ int pesquisaLote(char* ficheiro, struct coordenada* alarmes, int n){
     // }
     
 
-
+/*
 int main(int argc, char argv[]){
     
     //obter o numero de linhas do exemplo.txt
@@ -226,4 +226,4 @@ int main(int argc, char argv[]){
     return 0;
 
 
-}
+}*/
