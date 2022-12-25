@@ -28,8 +28,8 @@ int pesquisaLote(char* ficheiro, struct coordenada* alarmes, int n){
     
     int fd = open(ficheiro, O_RDONLY);
     
-    char buf[(35*lines)];   //array para obter a string do exemplo.txt (27 para conseguir ler uma linha inteira * nr linhas)
-    read(fd, &buf, (35*lines));
+    char buf[(30*lines)];   //array para obter a string do exemplo.txt (27 para conseguir ler uma linha inteira * nr linhas)
+    read(fd, &buf, (30*lines));
     char* token[(3*lines)]; //tamanho do token será 3 (lat + long + path) * numero de linhas
     int alarmesTotais=0;
 
