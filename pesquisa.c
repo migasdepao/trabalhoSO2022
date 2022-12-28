@@ -61,14 +61,14 @@ int ProcessoEmail(int n,Coordenada* alarmes) {
 
 int main(int argc, char *argv[]){
 
-    printf("argv[0] %s\n", argv[0]);
-    printf("argv[1] %s\n", argv[1]);
-    printf("argv[2] %d\n", atoi(argv[2]));
+    //caso queira ver o que recebeu da linha de comandos:
+    // printf("argv[0] %s\n", argv[0]);
+    // printf("argv[1] %s\n", argv[1]);
+    // printf("argv[2] %d\n", atoi(argv[2]));
 
     
     char path[20];
     strcpy(path, argv[1]);
-    printf("path: %s \n", path);
     int maxAlarmes = atoi(argv[2]); //é o numero máximo de alarmes que quero encontrar por .dat
 
     //obter o numero de linhas do exemplo.txt
