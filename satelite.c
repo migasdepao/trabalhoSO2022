@@ -7,10 +7,7 @@
 #include <stdlib.h>
 #include "satelite.h"
 #define MAX_PROCESSES 4
-
-//struct pixel { unsigned int r, g, b, ir; };
-//struct coordenada { int latitude, longitude; };
-
+#define MAX 100
 
 int pesquisaLote(char* ficheiro, struct coordenada* alarmes, int n){
 
@@ -19,26 +16,29 @@ int pesquisaLote(char* ficheiro, struct coordenada* alarmes, int n){
     char c;
     int lines = 1;
     while (read(fd1, &c, 1) == 1) {
-    // Increment the line count whenever a newline character is read
+    // Incremento sempre que leio um \n, assumo que no inicio da leitura já tenho uma linha
     if (c == '\n') {
       lines++;
         }
     }
-    printf("numero de linhas\n: %d", lines);
+    
+    printf("numero de linhas: %d\n", lines);
     
     int fd = open(ficheiro, O_RDONLY);
     
-    char buf[(30*lines)];   //array para obter a string do exemplo.txt (27 para conseguir ler uma linha inteira * nr linhas)
-    read(fd, &buf, (30*lines));
+    char buf[(MAX*lines)];   //array para obter a string do exemplo.txt (27 para conseguir ler uma linha inteira * nr linhas)
+    int r = read(fd, &buf, (MAX*lines));
+    printf("li %d caracteres;\n", r);
+    buf[r] = '\0';
     char* token[(3*lines)]; //tamanho do token será 3 (lat + long + path) * numero de linhas
     int alarmesTotais=0;
 
-    struct pixel pix; //variavel de teste para brincar no while
+    struct pixel pix; //variavel auxiliar para guardar os pixeis nas leituras
     
     //metodo para obter tanto as coordenadas como os paths dos ficheiros binarios
-    token[0] = strtok(buf, "  \n");
+    token[0] = strtok(buf, ",  \n");
     for(int i=1; i<sizeof(token)/sizeof(token[0]); i++){
-        token[i] = strtok(NULL, "  \n");
+        token[i] = strtok(NULL, ",  \n");
     }
 
     //print dos tokens
@@ -58,11 +58,9 @@ int pesquisaLote(char* ficheiro, struct coordenada* alarmes, int n){
         }
     }
 
-
-
     //criamos um processo para cada .dat que vamos procurar
     pid_t filhos_pids[lines]; //crio a quantidade de pids conforme a quantidade de linhas, neste caso será igual ao valor total de ficheiros em que vamos procurar
-    pid_t pid;
+    pid_t pid;              //id de um processo atual que será adicionado ao filhos_pid
     int globalInd = 0; //index global para conseguir guardar os valores dos alarmes
     int processos_concurrentes=0;
         
@@ -71,7 +69,7 @@ int pesquisaLote(char* ficheiro, struct coordenada* alarmes, int n){
             while(processos_concurrentes == MAX_PROCESSES)
                 {
                 int status;
-                pid_t filho_pid=waitpid(-1,&status,WNOHANG);
+                pid_t filho_pid=waitpid(-1,&status,WNOHANG);    //fico à espera que qualquer processo acabe
                 if(filho_pid>0)
                 {
                  printf("Status=%d\t  Pid=%d\n",WEXITSTATUS(status),filho_pid);
@@ -98,7 +96,7 @@ int pesquisaLote(char* ficheiro, struct coordenada* alarmes, int n){
             int aux[2];
             Coordenada* alarmesAux = malloc(sizeof(struct coordenada));
 
-            while( ( (read(fp0, &pix, sizeof(pix)) ) > 0 )  & (k < n)){ //enquanto houver pixeis para ler e k<n em que k é a quantidade de alarmes e n é o maximo de alarmes
+            while( ( (read(fp0, &pix, sizeof(pix)) ) > 0 )  && (k < n)){ //enquanto houver pixeis para ler e k<n em que k é a quantidade de alarmes e n é o maximo de alarmes
                 //printf("%d %d %d %d \n", pix.r, pix.g, pix.b, pix.ir);
                 if(((pix.r + pix.g + pix.b) > 100) & (pix.ir > 200)){
                     alarmesAux[k].latitude = teste.latitude;               //adiciono a alarmes a latitude original
@@ -129,8 +127,7 @@ int pesquisaLote(char* ficheiro, struct coordenada* alarmes, int n){
                
             int x=0;
             int aux[2];
-            
-            //alarmes = realloc(alarmes, sizeof(struct coordenada) * n);
+        
 
             int c = read(pfd[p][0], aux, sizeof(int)*2);
 
@@ -153,7 +150,6 @@ int pesquisaLote(char* ficheiro, struct coordenada* alarmes, int n){
             close(fd);
             }
 
-        
     
     }
 
@@ -172,28 +168,6 @@ int pesquisaLote(char* ficheiro, struct coordenada* alarmes, int n){
         return alarmesTotais;
 
     }
-
-    
-
-
-       
-
-
-
-    
-        //espero todos os processos terminar em caso de duvida
-    //     for(int p=0; p<lines; p++){
-    //             int status;
-    //         waitpid(pids[p], &status, 0);
-    //         if(WIFEXITED(status))
-    //             alarmesTotais += WEXITSTATUS(status);
-              
-    //         }
-       
-
-    //     return alarmesTotais;
-        
-    // }
     
 
 /*

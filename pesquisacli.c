@@ -14,30 +14,25 @@
 
 int main(int argc, char *argv[]) {
 
-// Create the FIFO file
-mkfifo(FIFO_FILE, 0666);
 
-// Create the LOG file
+// Crio o pipe para a passagem de dados do cliente para o servidor
+mkfifo(FIFO_FILE, 0666);
+// Crio o pipe para o envio da resposta do servidor para o cliente
 mkfifo(LOG, 0666);
 
-// Abri o FIFO file para poder ler e escrever
-int fd = open(FIFO_FILE, O_RDWR);
-
-// Abri o FIFO de log para poder escrever do cliente
+// Abri o FIFO file para poder escrever
+int fd = open(FIFO_FILE, O_WRONLY);
+// Abri o FIFO de log para poder ler a resposta do servidor
 int fd1 = open(LOG, O_RDWR);
 
-char path[30];
-strcpy(path, "./exemplo.txt");
 
-printf("argv[1]: %s", path);
+char paths[2][30];  //array de chars com duas posições -> [0] - guarda o path do ficheiro / [1] - guarda o valor maximo dos alarmes, neste caso passados ao dar exec do cli
+strcpy(paths[0], argv[1]);
+strcpy(paths[1], argv[2]);
 
-// fica continuamente à espera de respostas do servidor
+char buffer[1024];  //array auxiliar para poder receber a resposta do servidor
 
-printf("teste dento do whule");
-char buffer[1024];
-//o cliente precisa de escrever o path e o limite
-
-write(fd, path, strlen(path));
+write(fd, paths, sizeof(paths));      //o cliente manda o path e o limite para o servidor
 
 int n = read(fd1, buffer, sizeof(buffer));
 
@@ -46,13 +41,9 @@ if (n > 0) {
   printf("Received message: %s \n", buffer);
 }
 
-
-
-// Close the FIFO file and delete it
+//Fecha os pipes
 close(fd);
 close(fd1);
-unlink(FIFO_FILE);
-unlink(LOG);
 
 return 0;
 }

@@ -8,98 +8,58 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include "satelite.h"
-#include "pesquisa.c"
 #define FIFO_FILE "server_fifo"
 #define LOG "log"
 
-typedef struct FIFO_MSG {char *path;
-                 int limite;}fifo_msg;
-
-
 int main(int argc, char *argv[]) {
 
-//declaro um struct auxiliar
-fifo_msg fm;
-char* path;
-
-// Create the FIFO file
+// Crio o pipe para a passagem de dados do cliente para o servidor
 mkfifo(FIFO_FILE, 0666);
-
-// Create the LOG file
+// Crio o pipe para o envio da resposta do servidor para o cliente
 mkfifo(LOG, 0666);
 
-// Abri o FIFO file para poder ler do servidor
+// Abri o FIFO file para poder ler do cliente
 int fd = open(FIFO_FILE, O_RDONLY);
-if (fd < 0) {
-perror("Erro ao abrir o fifo file");
-exit(1);
-}
-
-// Abri o FIFO de log para poder escrever do server
+// Abri o FIFO de log para poder escrever a resposta para o cliente
 int fd1 = open(LOG, O_WRONLY);
-if (fd1 < 0) {
-perror("Erro ao abrir o fifo file");
-exit(1);
-}
 
-int limite = 5;
+char paths[2][30];  //array de chars com duas posições -> [0] - guarda o path do ficheiro / [1] - guarda o valor maximo dos alarmes
 
 // fica continuamente à espera de respostas do cliente
 
+while(1){
 
+int n = read(fd, paths, sizeof(paths));         //leio o que é passado do cliente
 
-int n = read(fd, path, strlen(path));
-printf("li: %s\n", path);
 // se houve uma resposta vai fazer algo
 if (n > 0) {
-  //printf("Received message: %s %d\n", fm.path, fm.limite);
+    printf("li: %s %s\n", paths[0], paths[1]);
     
-  // Process the message...
-
-  //obter o numero de linhas do exemplo.txt
-    int fd1 = open(path, O_RDONLY);
-    char c;
-    int lines = 1;
-    while (read(fd1, &c, 1) == 1) {
-    // Increment the line count whenever a newline character is read
-    if (c == '\n') {
-      lines++;
-        }
-    }
-    
-    int maxAlarmes = limite; //é o numero máximo de alarmes que quero encontrar por .dat
-
-    //aloco o tamanho da struct * o numero de ficheiros que vou procurar * o numero maximo de alarmes por ficheiro
-    Coordenada* alarmes = malloc(sizeof(Coordenada) * lines * maxAlarmes); 
-
-    int n = pesquisaLote(path, alarmes, maxAlarmes);
-    printf("Encontrei %d alarmes!\n", n);
-    for(int i = 0; i<n; i++){
-        printf("latitude: %d longitude: %d\n", alarmes[i].latitude, alarmes[i].longitude);
+    pid_t pid = fork();
+    if (pid == -1) {
+        perror("fork");
+        return -1;
     }
 
-    //execlp("sort", "-n", alarmes, n, sizeof(int), NULL);
+    if (pid == 0){
+      // processo filho
+    execlp("./pesquisa", "pesquisa", paths[0], paths[1], (char *)NULL);               //pesquisaLote(path, alarmes, maxAlarmes);
 
-    /*printf("depois do exec!\n");
-    for(int i = 0; i<n; i++){
-        printf("latitude: %d longitude: %d\n", alarmes[i].latitude, alarmes[i].longitude);
-    }*/
+    }else{
+      //processo pai
+
+      // Envia a resposta para o cliente
+      write(fd1, "Pesquisa Completa", 17);
+
+    }
   
-    
-    ProcessoEmail(n,alarmes);
-    free(alarmes);
-    
-
-  // Send a response to the client
-  write(fd1, "Pesquisa Completa", 17);
-
+}
 
 }
 
-// Close the FIFO file and delete it
+// Fecha os pipes
 close(fd);
 close(fd1);
-unlink(FIFO_FILE);
 
 return 0;
 }
